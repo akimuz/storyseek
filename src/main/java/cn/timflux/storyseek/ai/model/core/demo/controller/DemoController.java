@@ -1,4 +1,4 @@
-package cn.timflux.storyseek.ai.model.core.story.controller;
+package cn.timflux.storyseek.ai.model.core.demo.controller;
 
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.beans.factory.annotation.Autowired;
