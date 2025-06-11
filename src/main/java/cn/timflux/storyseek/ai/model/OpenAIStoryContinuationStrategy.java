@@ -1,5 +1,6 @@
 package cn.timflux.storyseek.ai.model;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
@@ -17,14 +18,15 @@ import java.util.Map;
 @Component
 public class OpenAIStoryContinuationStrategy implements StoryContinuationStrategy {
 
+    @Autowired
     private final ChatClient chatClient;
     private final String systemPrompt;
 
     public OpenAIStoryContinuationStrategy(
-        ChatClient.Builder chatClientBuilder,
-        @Value("${story.prompt.continuation}") String systemPrompt
+        ChatClient chatClient,
+        @Value("${story.prompt.continuation:default continuation prompt}") String systemPrompt
     ) {
-        this.chatClient = chatClientBuilder.build();  // 已是注入好的 ChatClient
+        this.chatClient = chatClient;  // 已是注入好的 ChatClient
         this.systemPrompt = systemPrompt;
     }
 

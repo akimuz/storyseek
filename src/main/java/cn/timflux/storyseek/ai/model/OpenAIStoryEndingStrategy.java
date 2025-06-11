@@ -1,5 +1,6 @@
 package cn.timflux.storyseek.ai.model;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
@@ -18,14 +19,15 @@ import java.util.Map;
 @Component
 public class OpenAIStoryEndingStrategy implements StoryEndingStrategy {
 
+    @Autowired
     private final ChatClient chatClient;
     private final String systemPrompt;
 
     public OpenAIStoryEndingStrategy(
-        ChatClient.Builder chatClientBuilder,
-        @Value("${story.prompt.ending}") String systemPrompt
+        ChatClient chatClient,
+        @Value("${story.prompt.ending: default ending prompt}") String systemPrompt
     ) {
-        this.chatClient = chatClientBuilder.build();
+        this.chatClient = chatClient;
         this.systemPrompt = systemPrompt;
     }
 
