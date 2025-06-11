@@ -3,20 +3,23 @@ package cn.timflux.storyseek.core.story.controller;
 
 import cn.timflux.storyseek.core.story.dto.BeginningRequest;
 import cn.timflux.storyseek.core.story.service.StorySession;
+import cn.timflux.storyseek.core.story.service.StorySessionService;
 import cn.timflux.storyseek.core.story.service.StoryStateMachine;
 import cn.timflux.storyseek.ai.service.StoryAIService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import cn.timflux.storyseek.core.story.dto.OptionDTO;
-import org.springframework.http.MediaType;
-import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Flux;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletResponse;
+
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 /**
  * ClassName: BeginningController
  * Package: cn.timflux.storyseek.core.story.controller
@@ -27,6 +30,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @Version 1.0
  */
 
+
 @RestController
 @RequestMapping("/api/story")
 public class BeginningController {
@@ -34,94 +38,139 @@ public class BeginningController {
     private final StoryAIService storyAIService;
     private final StoryStateMachine stateMachine;
     private final ObjectMapper mapper = new ObjectMapper();
-    // 会话存储
-    private final Map<String, StorySession> sessions = new ConcurrentHashMap<>();
+    private final StorySessionService sessionService;
 
     public BeginningController(StoryAIService storyAIService,
-                               StoryStateMachine stateMachine) {
+                               StoryStateMachine stateMachine,
+                               StorySessionService sessionService) {
         this.storyAIService = storyAIService;
         this.stateMachine = stateMachine;
+        this.sessionService = sessionService;
     }
 
-    @PostMapping(value = "/beginning", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<ServerSentEvent<String>> generateBeginning(
-            @RequestBody BeginningRequest req
-    ) {
-        // 1. 新建会话并持久 sessionId
+    /**
+     * 1. 接收表单，创建会话并返回 sessionId
+     */
+    @PostMapping("/beginning")
+    public Map<String, String> createSession(@RequestBody BeginningRequest req) {
         StorySession session = new StorySession();
-        sessions.put(session.getSessionId(), session);
-
-        // 2. 调用 AI，得到原始流
-        Map<String, Object> ctx = Map.of(
+        session.setContext(Map.of(
             "heroName", req.getHeroName(),
             "styleTag", req.getStyleTag(),
             "worldSetting", req.getWorldSetting(),
             "otherReq", req.getOtherReq()
-        );
-        Flux<String> raw = storyAIService.generateBeginning(ctx)
-                .doOnNext(session::addSegment);
+        ));
+        sessionService.addSession(session);
+        return Map.of("sessionId", session.getSessionId());
+    }
 
-        // 3. 解析分隔符 [[OPTIONS]]（如果你在 prompt 中要求模型返回选项）
+    /**
+     * 2. SSE 流式返回：先 content 事件推剧情片段，再 options 事件推选项
+     */
+    @GetMapping("/stream/{sessionId}")
+    public void streamBeginning(@PathVariable String sessionId,
+                                HttpServletResponse response) throws IOException {
+        StorySession session = sessionService.getSession(sessionId);
+        if (session == null) {
+            response.sendError(404, "Session not found");
+            return;
+        }
+
+        // 设置 SSE 响应头，并强制 UTF-8 编码
+        response.setContentType("text/event-stream; charset=UTF-8");
+        response.setCharacterEncoding("UTF-8");
+        response.setHeader("Cache-Control", "no-cache");
+        response.setHeader("Connection", "keep-alive");
+
+        ServletOutputStream out = response.getOutputStream();
+
+        // 获取上下文并调用 AI 生成 Flux<String>
+        Map<String, Object> ctx = session.getContext();
+        Iterator<String> iterator = storyAIService.generateBeginning(ctx)
+            .doOnNext(session::addSegment)
+            .toStream()
+            .iterator();
+
+        // 用于分割 [[OPTIONS]] 后续 JSON
         List<String> jsonBuf = new ArrayList<>();
-        final boolean[] seenSep = {false};
-        boolean ending = false; // 开头阶段不判结尾
+        boolean seenSep = false, optionEnd = false;
 
-        Flux<ServerSentEvent<String>> contentEvents = raw
-            .map(fragment -> {
-                if (seenSep[0]) {
-                    jsonBuf.add(fragment);
-                    return null;
-                }
-                int idx = fragment.indexOf("[[OPTIONS]]");
-                if (idx >= 0) {
-                    seenSep[0] = true;
-                    String before = fragment.substring(0, idx);
-                    String after  = fragment.substring(idx + "[[OPTIONS]]".length());
-                    jsonBuf.add(after);
-                    return ServerSentEvent.<String>builder()
-                        .event("content")
-                        .data(before)
-                        .build();
-                }
-                return ServerSentEvent.<String>builder()
-                        .event("content")
-                        .data(fragment)
-                        .build();
-            })
-            .filter(Objects::nonNull);
+        // 1. 逐片段写 content 事件
+        while (iterator.hasNext()) {
+            String fragment = iterator.next();
 
-        // 4. 拼接 options 事件：同续写
-        Flux<ServerSentEvent<String>> optionsEvent = Flux.defer(() -> {
-            List<OptionDTO> opts;
-            if (!seenSep[0]) {
-                // 如果开头没有让模型生成选项，使用 stateMachine 给出的默认
-                opts = stateMachine.nextOptions(session);
-            } else {
-                // 从 jsonBuf 解析
-                try {
-                    String json = String.join("", jsonBuf);
-                    opts = mapper.readValue(json, new TypeReference<>() {});
-                } catch (Exception e) {
-                    opts = Collections.emptyList();
-                }
-            }
-            String data = null;
             try {
-                data = mapper.writeValueAsString(Map.of(
-                    "ending", ending,
-                    "options", opts
-                ));
-            } catch (JsonProcessingException e) {
-                throw new RuntimeException(e);
+                if (!seenSep && fragment.contains("[[")) {
+                    int idx = fragment.indexOf("[[");
+                    String before = fragment.substring(0, idx);
+                    String after  = fragment.substring(idx + "[[".length());
+                    seenSep = true;
+                    jsonBuf.add(after);
+                    System.out.println("fragment1 after:"+after);
+                    System.out.println("fragment1 before:"+before);
+                    writeEvent(out, "content", before);
+                }
+                // 选项收集
+                else if (seenSep && fragment.contains("]]")) {
+                    int end = fragment.indexOf("]]");
+                    String after  = fragment.substring(end + "]]".length());
+                    jsonBuf.add(after);
+                    optionEnd = true;
+                }
+                else if(seenSep && optionEnd){
+                    jsonBuf.add(fragment);
+                    System.out.println("选项开始: " + fragment);
+                }
+                else if(!seenSep){
+                    System.out.println("fragment3:"+fragment);
+                    writeEvent(out, "content", fragment);
+                }
             }
-            return Flux.just(ServerSentEvent.<String>builder()
-                    .event("options")
-                    .data(data)
-                    .build());
-        });
+            catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
 
-        // 5. 将 sessionId 放在第一个 event 的 header 中
-        //    (前端可从响应头里读到 Session-Id)
-        return contentEvents.concatWith(optionsEvent);
+        // 2. 生成并写 options 事件
+        List<OptionDTO> opts;
+        if (!seenSep) {
+            opts = stateMachine.nextOptions(session);
+        } else {
+            String json = String.join("", jsonBuf);
+            System.out.println("json:"+json);
+            try {
+                opts = mapper.readValue(json, new TypeReference<>() {});
+                System.out.println("opts:"+opts);
+            } catch (Exception e) {
+                opts = List.of();
+            }
+        }
+        Map<String, Object> payload = Map.of(
+            "ending", false,
+            "options", opts,
+            "sessionId", sessionId
+        );
+        String data;
+        try {
+            data = mapper.writeValueAsString(payload);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        writeEvent(out, "options", data);
+        System.out.println("data:"+ data);
+
+        // 刷新但不关闭，让客户端决定何时断开
+        out.flush();
+    }
+
+    /**
+     * 辅助：写一条 SSE 事件
+     */
+    private void writeEvent(ServletOutputStream out,
+                            String event, String data) throws IOException {
+        String sse = "event: " + event + "\n" +
+                     "data: "  + data  + "\n\n";
+        out.write(sse.getBytes(StandardCharsets.UTF_8));
+        out.flush();
     }
 }
