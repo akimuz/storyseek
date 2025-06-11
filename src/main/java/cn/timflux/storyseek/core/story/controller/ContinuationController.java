@@ -6,14 +6,13 @@ import cn.timflux.storyseek.core.story.service.StorySession;
 import cn.timflux.storyseek.core.story.service.StorySessionService;
 import cn.timflux.storyseek.core.story.service.StoryStateMachine;
 import cn.timflux.storyseek.ai.service.StoryAIService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 
-import org.springframework.beans.factory.annotation.Autowired;
 
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
@@ -30,16 +29,18 @@ import java.nio.charset.StandardCharsets;
  * @Create 2025/6/10 上午7:52
  * @Version 1.0
  */
+
 @RestController
 @RequestMapping("/api/story")
 public class ContinuationController {
 
+    private static final String HEADER_SESSION = "X-Session-Id";
+
     private final StoryAIService storyAIService;
     private final StoryStateMachine stateMachine;
-    private final ObjectMapper mapper = new ObjectMapper();
     private final StorySessionService sessionService;
+    private final ObjectMapper mapper = new ObjectMapper();
 
-    @Autowired
     public ContinuationController(StoryAIService storyAIService,
                                   StoryStateMachine stateMachine,
                                   StorySessionService sessionService) {
@@ -49,82 +50,80 @@ public class ContinuationController {
     }
 
     /**
-     * POST 接口：仅接收用户选择并存入会话
+     * 第一步：用户选择一个选项
      */
     @PostMapping("/continuation")
-    public void chooseOption(@RequestHeader("X-Session-Id") String sessionId,
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void chooseOption(@RequestHeader(HEADER_SESSION) String sessionId,
                              @RequestBody ContinuationRequest req,
                              HttpServletResponse response) throws IOException {
         StorySession session = sessionService.getSession(sessionId);
         if (session == null) {
-            response.sendError(404, "Session not found");
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Session not found");
             return;
         }
-        // 存储用户选择
         session.putContext("choiceId", req.getChoiceId());
-        response.setStatus(204);
     }
 
-    @GetMapping("continuation/stream/{sessionId}")
+    /**
+     * 第二步：流式返回续写或进入结尾
+     */
+    @GetMapping("/continuation/stream/{sessionId}")
     public void streamContinuation(@PathVariable String sessionId,
-                               @RequestParam(required = false) String currentStory,
-                               HttpServletResponse response) throws IOException {
-        // 1. 获取会话
+                                   @RequestParam(required = false) String currentStory,
+                                   HttpServletResponse response) throws IOException {
         StorySession session = sessionService.getSession(sessionId);
         if (session == null) {
-            response.sendError(404, "Session not found");
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Session not found");
             return;
         }
 
-        // 2. 增加续写次数并检查是否结束
-        int ct = session.incrementAndGetCount();
+        // 增加续写计数并判断是否该结束
+        int round = session.incrementAndGetCount();
         boolean ending = stateMachine.isEnding(session);
 
-        // 3. 设置SSE响应头
+        // SSE 头部设置
         response.setContentType("text/event-stream; charset=UTF-8");
         response.setCharacterEncoding("UTF-8");
         response.setHeader("Cache-Control", "no-cache");
         response.setHeader("Connection", "keep-alive");
         ServletOutputStream out = response.getOutputStream();
 
-        // 4. 构建上下文
+        // 准备上下文，注入 previousStory 与 choiceId
         Map<String, Object> ctx = new HashMap<>(session.getContext());
         if (currentStory != null) {
             ctx.put("currentStory", currentStory);
         }
-        String choiceId = (String) session.getContext().get("choiceId");
-        ctx.put("choiceId", choiceId);
 
-        System.out.println("第"+ct +"轮次");
-        // 5. 生成续写内容
-        Iterator<String> iterator = storyAIService.generateContinuation(ctx)
-            .doOnNext(session::addSegment)
-            .toStream()
-            .iterator();
+        // 根据是否结尾，调用不同的 AI 接口
+        Iterator<String> iterator = ending
+            ? storyAIService.generateEnding(ctx).toStream().iterator()
+            : storyAIService.generateContinuation(ctx).toStream().iterator();
 
-        // 6. 处理续写内容和选项
+        // SSE 事件分割处理
+        boolean seenSep = false, optionEnd = false;
         List<String> jsonBuf = new ArrayList<>();
-        boolean seenSep = false;
-        boolean optionEnd = false;
 
         while (iterator.hasNext()) {
             String fragment = iterator.next();
             try {
                 if (!seenSep && fragment.contains("[[")) {
                     int idx = fragment.indexOf("[[");
-                    String before = fragment.substring(0, idx);
-                    String after = fragment.substring(idx + "[[".length());
+                    // content 之前部分
+                    writeEvent(out, "content", fragment.substring(0, idx));
                     seenSep = true;
-                    jsonBuf.add(after);
-                    writeEvent(out, "content", before);
-                } else if (seenSep && fragment.contains("]]")) {
-                    int end = fragment.indexOf("]]");
-                    String after = fragment.substring(end + "]]".length());
-                    jsonBuf.add(after);
+                    jsonBuf.add(fragment.substring(idx + 2));
+                }
+                else if (seenSep && !optionEnd && fragment.contains("]]")) {
+                    int idx = fragment.indexOf("]]");
+                    jsonBuf.add(fragment.substring(0, idx));
                     optionEnd = true;
-                } else if (seenSep && optionEnd) {
+                    jsonBuf.add(fragment.substring(idx + 2));
+                }
+                else if (seenSep) {
                     jsonBuf.add(fragment);
-                } else if (!seenSep) {
+                }
+                else {
                     writeEvent(out, "content", fragment);
                 }
             } catch (IOException e) {
@@ -132,42 +131,36 @@ public class ContinuationController {
             }
         }
 
-        // 7. 处理选项
+        // 组织 options
         List<OptionDTO> opts;
-        if (!seenSep) {
+        if (ending) {
+            opts = List.of();  // 结尾不展示选项
+        } else if (!seenSep) {
             opts = stateMachine.nextOptions(session);
         } else {
+            // 从缓冲 JSON 读取
             String json = String.join("", jsonBuf);
             try {
                 opts = mapper.readValue(json, new TypeReference<List<OptionDTO>>() {});
-            } catch (Exception e) {
-                opts = Collections.emptyList();
+            } catch (Exception ex) {
+                opts = stateMachine.nextOptions(session);
             }
         }
 
-        // 8. 发送选项事件
+        // 发送 options 事件（结尾标记）
         Map<String, Object> payload = Map.of(
             "ending", ending,
             "options", opts,
             "sessionId", sessionId
         );
-        String data;
-        try {
-            data = mapper.writeValueAsString(payload);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
+        String data = mapper.writeValueAsString(payload);
         writeEvent(out, "options", data);
-
-        // 9. 刷新输出流
         out.flush();
     }
 
-    private void writeEvent(ServletOutputStream out,
-                            String event, String data) throws IOException {
-        String sse = "event: " + event + "\n" +
-                     "data: "  + data  + "\n\n";
-        out.write(sse.getBytes(StandardCharsets.UTF_8));
+    private void writeEvent(ServletOutputStream out, String event, String data) throws IOException {
+        out.write(("event: " + event + "\n").getBytes(StandardCharsets.UTF_8));
+        out.write(("data: "  + data  + "\n\n").getBytes(StandardCharsets.UTF_8));
         out.flush();
     }
 }

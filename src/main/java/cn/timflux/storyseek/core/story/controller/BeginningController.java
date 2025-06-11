@@ -51,7 +51,7 @@ public class BeginningController {
     /**
      * 1. 接收表单，创建会话并返回 sessionId
      */
-    @PostMapping("/beginning")
+    @PostMapping("/beginning_pre")
     public Map<String, String> createSession(@RequestBody BeginningRequest req) {
         StorySession session = new StorySession();
         session.setContext(Map.of(
@@ -67,7 +67,7 @@ public class BeginningController {
     /**
      * 2. SSE 流式返回：先 content 事件推剧情片段，再 options 事件推选项
      */
-    @GetMapping("/stream/{sessionId}")
+    @GetMapping("/beginning/stream/{sessionId}")
     public void streamBeginning(@PathVariable String sessionId,
                                 HttpServletResponse response) throws IOException {
         StorySession session = sessionService.getSession(sessionId);
