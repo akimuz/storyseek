@@ -41,13 +41,14 @@ public class StorySession {
     public Map<String, Object> getContext() {
         return context;
     }
-
-    public void setContext(Map<String, Object> context) {
-        this.context = context;
+    // 当设置初始上下文时，拷贝到可变 HashMap
+    public void setContext(Map<String, Object> ctx) {
+        this.context = new HashMap<>(ctx);
     }
 
-    public void putContext(String choiceIdKey, String choiceId) {
-        context.put(choiceIdKey,choiceId);
+    // 改为通用 Object 类型，key 任意
+    public void putContext(String key, Object value) {
+        this.context.put(key, value);
     }
 }
 

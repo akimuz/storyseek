@@ -17,7 +17,7 @@ import java.util.List;
 @Component
 public class StoryStateMachine {
 
-    private static final int MAX_CONTINUATION = 5; // N 次后触发结尾
+    private static final int MAX_CONTINUATION = 2; // N 次后触发结尾
 
     /**
      * 判断是否已经达到续写次数上限，若是则进入结尾逻辑
