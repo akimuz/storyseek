@@ -22,12 +22,15 @@ public class StoryStateMachine {
     /**
      * 判断是否已经达到续写次数上限，若是则进入结尾逻辑
      */
-    public boolean isEnding(StorySession session) {
+    public boolean frontEnding(StorySession session) {
         return session.getCount() >= MAX_CONTINUATION;
+    }
+    public boolean genEnding(StorySession session) {
+        return session.getCount() == MAX_CONTINUATION +1;
     }
 
     public List<OptionDTO> nextOptions(StorySession session) {
-        if (isEnding(session)) {
+        if (genEnding(session)) {
             return List.of(); // 结尾不返回选项
         }
         // 接收无效，返回两个默认固定选项兜底

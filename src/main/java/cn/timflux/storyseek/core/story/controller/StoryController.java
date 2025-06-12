@@ -76,7 +76,8 @@ public class StoryController {
         }
 
         // 1. 先判断当前是否为结尾
-        boolean ending = stateMachine.isEnding(session);
+        boolean frontEnding = stateMachine.frontEnding(session);
+        boolean genEnding = stateMachine.genEnding(session);
         // 2. 再增加续写次数，并把 turn 放入上下文
         int turn = session.incrementAndGetCount();
 
@@ -89,13 +90,11 @@ public class StoryController {
 
         // 构建 AI 上下文
         Map<String, Object> ctx = new HashMap<>(session.getContext());
-        ctx.put("turn", turn);
-        ctx.put("ending", ending);
-//        ctx.put("choiceId", choiceId);
+        ctx.put("sessionId",sessionId);
         System.out.println("ctx"+ctx);
 
         // 选 AI 服务方法
-        Iterator<String> it = ending
+        Iterator<String> it = genEnding
             ? aiService.generateEnding(ctx).doOnNext(session::addSegment).toStream().iterator()    // Flux<String> → Stream<String>
             : (turn == 1
                 ? aiService.generateBeginning(ctx)
@@ -125,7 +124,7 @@ public class StoryController {
 
         // 解析选项
         List<OptionDTO> opts;
-        if (!seenSep) {
+        if (!seenSep) { // 从大模型返回中 未收集到选项
             opts = stateMachine.nextOptions(session);
         } else {
             String json = String.join("", buf);
@@ -141,7 +140,7 @@ public class StoryController {
         session.putContext("lastOptions", opts);
         // SSE 推送 options
         Map<String,Object> payload = Map.of(
-            "ending", ending,
+            "ending", frontEnding,
             "options", opts,
             "sessionId", sessionId
         );
