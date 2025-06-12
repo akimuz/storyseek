@@ -1,11 +1,15 @@
 package cn.timflux.storyseek.ai.model;
+import cn.timflux.storyseek.core.story.dto.OptionDTO;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
 /**
  * ClassName: OpenAIStoryContinuationStrategy
  * Package: cn.timflux.storyseek.ai.model
@@ -32,21 +36,46 @@ public class OpenAIStoryContinuationStrategy implements StoryContinuationStrateg
 
     @Override
     public Flux<String> generateContinuation(Map<String, Object> context) {
-        String currentStory = (String) context.get("currentStory");
-        String choiceId     = (String) context.get("choiceId");
+        try {
+            List<?> rawOptions = (List<?>) context.get("lastOptions");
+            String choiceId = (String) context.get("lastChoice");
+            String currentStory = getChoiceTitle(rawOptions, choiceId);
 
-        String userPrompt = String.format(
-            "%s\n当前剧情:\n%s\n选项ID: %s\n\n"
-          + "请先续写上述剧情，最后一行请输出标记 [[OPTIONS]]，然后紧跟一个 JSON 数组，包含两个选项对象 "
-          + "(每个对象有 id 和 title 字段)，例如：\n"
-          + "[{\"id\":\"A\",\"title\":\"...\"},{\"id\":\"B\",\"title\":\"...\"}]\n",
-          systemPrompt, currentStory, choiceId
-        );
+            String userPrompt = String.format(
+                "%s\n当前剧情:\n%s\n选项ID: %s\n\n"
+              + "请先续写上述剧情，最后一行请输出标记 &，然后紧跟一个 JSON 数组，包含两个选项对象 "
+              + "(每个对象有 id 和 title 字段)，例如：\n"
+              + "[{\"id\":\"A\",\"title\":\"...\"},{\"id\":\"B\",\"title\":\"...\"}]\n",
+              systemPrompt, currentStory, choiceId
+            );
 
-        return chatClient.prompt()
-                .system("你是一位擅长多分支叙事的 AI 作家。")
-                .user(userPrompt)
-                .stream()
-                .content();
+            return chatClient.prompt()
+                    .system("你是一位擅长多分支叙事的 AI 作家。")
+                    .user(userPrompt)
+                    .stream()
+                    .content();
+        } catch (ClassCastException | IllegalArgumentException e) {
+        return Flux.error(new IllegalStateException("上下文数据异常: " + e.getMessage()));
+        }
+    }
+
+    // 获取选择的选项内容 包含类型安全检查
+    public static String getChoiceTitle(List<?> rawOptions, String choiceID) {
+        if (rawOptions == null) {
+            throw new IllegalArgumentException("lastOptions不能为null");
+        }
+        return rawOptions.stream()
+            .filter(OptionDTO.class::isInstance) // 过滤非OptionDTO对象
+            .map(OptionDTO.class::cast)
+            .filter(opt -> choiceID.equals(opt.getId()))
+            .findFirst()
+            .map(OptionDTO::getTitle)
+            .orElseThrow(() -> new IllegalArgumentException(
+                "找不到匹配选项: choiceID=" + choiceID +
+                " | 有效选项: " + rawOptions.stream()
+                    .filter(OptionDTO.class::isInstance)
+                    .map(o -> ((OptionDTO)o).getId())
+                    .collect(Collectors.joining(","))
+            ));
     }
 }

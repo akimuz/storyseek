@@ -1,11 +1,16 @@
 package cn.timflux.storyseek.ai.model;
+import cn.timflux.storyseek.core.story.dto.OptionDTO;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
+import static cn.timflux.storyseek.ai.model.OpenAIStoryContinuationStrategy.getChoiceTitle;
 
 /**
  * ClassName: OpenAIStoryEndingStrategy
@@ -34,11 +39,14 @@ public class OpenAIStoryEndingStrategy implements StoryEndingStrategy {
     @Override
     public Flux<String> generateEnding(Map<String, Object> context) {
         String fullStory = (String) context.get("fullStory");
+        List<?> rawOptions = (List<?>) context.get("lastOptions");
+        String choiceId = (String) context.get("lastChoice");
+        String currentStory = getChoiceTitle(rawOptions, choiceId);
 
         String userPrompt = String.format(
-            "%s\n完整剧情摘要:\n%s",
-            systemPrompt,
-            fullStory
+            "%s\n当前结尾剧情:\n%s\n选项ID: %s\n\n"
+          + "完整剧情摘要:\n%s",
+            systemPrompt, currentStory, choiceId, fullStory
         );
 
         return chatClient.prompt()

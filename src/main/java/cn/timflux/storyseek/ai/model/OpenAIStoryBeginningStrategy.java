@@ -37,7 +37,7 @@ public class OpenAIStoryBeginningStrategy implements StoryBeginningStrategy {
     public Flux<String> generateBeginning(Map<String, Object> context) {
         String userPrompt = String.format(
             "%s\n角色: %s\n风格: %s\n世界观: %s\n其他要求: %s"
-          + "请根据上述设定写作，最后一行请输出标记 [[OPTIONS]]，然后紧跟一个 JSON 数组，包含两个选项对象 "
+          + "请根据上述设定写作，最后一行请输出标记 &，然后紧跟一个 JSON 数组，包含两个选项对象 "
           + "(每个对象有 id 和 title 字段)，例如：\n"
           + "[{\"id\":\"A\",\"title\":\"...\"},{\"id\":\"B\",\"title\":\"...\"}]\n",
           systemPrompt,
@@ -46,12 +46,10 @@ public class OpenAIStoryBeginningStrategy implements StoryBeginningStrategy {
             context.get("worldSetting"),
             context.getOrDefault("otherReq", "无")
         );
-        System.out.println(userPrompt);
         Flux<String> res = chatClient.prompt()
                 .user(userPrompt)
                 .stream()
                 .content();
-        System.out.println(res);
         return res;
     }
 }
