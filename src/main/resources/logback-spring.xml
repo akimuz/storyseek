@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <!-- Spring Boot 默认的 logback 配置 -->
+  <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+  <!-- 从 environment 或系统属性读取 LOG_FILE -->
+  <property name="LOG_FILE" value="${LOG_FILE:-${LOG_PATH:-./logs}/app.log}"/>
+
+  <!-- 仅引入文件 appender -->
+  <include resource="org/springframework/boot/logging/logback/file-appender.xml"/>
+
+  <root level="INFO">
+    <appender-ref ref="FILE"/>
+  </root>
+
+  <!-- 针对 SimpleLoggerAdvisor 单独降级或升级 -->
+  <logger name="org.springframework.ai.chat.client.advisor" level="DEBUG" additivity="false">
+    <appender-ref ref="FILE"/>
+  </logger>
+</configuration>

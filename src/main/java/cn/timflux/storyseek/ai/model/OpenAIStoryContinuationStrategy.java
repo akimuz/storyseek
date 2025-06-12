@@ -1,6 +1,7 @@
 package cn.timflux.storyseek.ai.model;
 import cn.timflux.storyseek.core.story.dto.OptionDTO;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -42,15 +43,21 @@ public class OpenAIStoryContinuationStrategy implements StoryContinuationStrateg
             String currentStory = getChoiceTitle(rawOptions, choiceId);
 
             String userPrompt = String.format(
-                "%s\n当前剧情:\n%s\n选项ID: %s\n\n"
-              + "请先续写上述剧情，最后一行请输出标记 &，然后紧跟一个 JSON 数组，包含两个选项对象 "
-              + "(每个对象有 id 和 title 字段)，例如：\n"
-              + "[{\"id\":\"A\",\"title\":\"...\"},{\"id\":\"B\",\"title\":\"...\"}]\n",
-              systemPrompt, currentStory, choiceId
-            );
+                    """
+                            %s
+                            选择剧情:
+                            %s: %s
 
+                            请根据选择剧情续写，最后一行请输出标记 &，然后紧跟一个 JSON 数组，包含两个选项对象 \
+                            (每个对象有 id 和 title 字段)，例如：
+                            [{"id":"A","title":"..."},{"id":"B","title":"..."}]
+                            """,
+              systemPrompt, choiceId, currentStory
+            );
+            System.out.println("context:"+context);
             return chatClient.prompt()
                     .system("你是一位擅长多分支叙事的 AI 作家。")
+                    .advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, context.get("sessionId")))
                     .user(userPrompt)
                     .stream()
                     .content();

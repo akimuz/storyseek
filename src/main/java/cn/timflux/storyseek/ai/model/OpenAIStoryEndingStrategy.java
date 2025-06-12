@@ -1,6 +1,7 @@
 package cn.timflux.storyseek.ai.model;
 import cn.timflux.storyseek.core.story.dto.OptionDTO;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -44,13 +45,19 @@ public class OpenAIStoryEndingStrategy implements StoryEndingStrategy {
         String currentStory = getChoiceTitle(rawOptions, choiceId);
 
         String userPrompt = String.format(
-            "%s\n当前结尾剧情:\n%s\n选项ID: %s\n\n"
-          + "完整剧情摘要:\n%s",
-            systemPrompt, currentStory, choiceId, fullStory
+                """
+                        %s
+                        当前结尾剧情:
+                        %s: %s
+
+                        请根据当前选择结尾:
+                        %s""",
+            systemPrompt, choiceId, currentStory, fullStory
         );
 
         return chatClient.prompt()
                 .system("你是一位擅长收束故事的 AI 作家。")
+                .advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, context.get("sessionId")))
                 .user(userPrompt)
                 .stream()
                 .content();

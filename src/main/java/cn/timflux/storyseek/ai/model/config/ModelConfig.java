@@ -29,7 +29,6 @@ public class ModelConfig {
     public ChatMemory chatMemory(){
         return MessageWindowChatMemory.builder()
             .chatMemoryRepository(new InMemoryChatMemoryRepository())
-            // 设置其他需要的参数
             .build();
     }
 

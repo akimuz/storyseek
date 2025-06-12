@@ -1,6 +1,9 @@
 package cn.timflux.storyseek.ai.model;
 
+import jakarta.websocket.Session;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
+import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
@@ -48,6 +51,7 @@ public class OpenAIStoryBeginningStrategy implements StoryBeginningStrategy {
         );
         Flux<String> res = chatClient.prompt()
                 .user(userPrompt)
+                .advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, context.get("sessionId")))
                 .stream()
                 .content();
         return res;
