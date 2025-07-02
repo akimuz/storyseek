@@ -1,4 +1,6 @@
 package cn.timflux.storyseek.core.write.service;
+
+import cn.timflux.storyseek.core.write.dto.ListOptionDTO;
 import cn.timflux.storyseek.core.write.dto.WorldSettingDTO;
 import cn.timflux.storyseek.core.write.entity.WorldSetting;
 
@@ -20,4 +22,5 @@ public interface WorldSettingService {
     void update(Long id, WorldSettingDTO dto);
     void delete(Long id);
     String getPromptText(List<Long> ids);
+    List<ListOptionDTO> getWordOptions(Long bookId);
 }

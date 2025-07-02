@@ -1,5 +1,6 @@
 package cn.timflux.storyseek.core.write.service.impl;
 
+import cn.timflux.storyseek.core.write.dto.ListOptionDTO;
 import cn.timflux.storyseek.core.write.dto.WorldSettingDTO;
 import cn.timflux.storyseek.core.write.entity.WorldSetting;
 import cn.timflux.storyseek.core.write.mapper.WorldSettingMapper;
@@ -65,5 +66,10 @@ public class WorldSettingServiceImpl implements WorldSettingService {
         return settings.stream()
                 .map(s -> String.format("设定：%s\n描述：%s", s.getName(), s.getDescription()))
                 .collect(Collectors.joining("\n\n"));
+    }
+
+    @Override
+    public List<ListOptionDTO> getWordOptions(Long bookId) {
+        return mapper.findOptionsByBookId(bookId);
     }
 }

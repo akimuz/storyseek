@@ -1,5 +1,6 @@
 package cn.timflux.storyseek.core.write.mapper;
 
+import cn.timflux.storyseek.core.write.dto.ListOptionDTO;
 import cn.timflux.storyseek.core.write.entity.WorldSetting;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.*;
@@ -29,4 +30,8 @@ public interface WorldSettingMapper extends BaseMapper<WorldSetting> {
 
     @Delete("DELETE FROM world_setting WHERE id = #{id}")
     void delete(Long id);
+
+    @Select("SELECT id, name AS label FROM world_setting WHERE book_id = #{bookId} ORDER BY created_at DESC")
+    List<ListOptionDTO> findOptionsByBookId(@Param("bookId") Long bookId);
+
 }

@@ -1,9 +1,9 @@
 package cn.timflux.storyseek.core.write.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
+
+import java.time.LocalDateTime;
 
 /**
  * ClassName: WorldSetting
@@ -22,4 +22,10 @@ public class WorldSetting {
     private Long bookId;
     private String name;
     private String description;
+
+    @TableField(fill = FieldFill.INSERT)
+    private LocalDateTime createdAt;
+
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updatedAt;
 }
