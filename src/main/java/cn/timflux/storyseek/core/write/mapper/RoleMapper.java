@@ -1,5 +1,6 @@
 package cn.timflux.storyseek.core.write.mapper;
 
+import cn.timflux.storyseek.core.write.dto.ListOptionDTO;
 import cn.timflux.storyseek.core.write.entity.Role;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.*;
@@ -30,5 +31,12 @@ public interface RoleMapper extends BaseMapper<Role> {
 
     @Select("SELECT * FROM role WHERE book_id=#{bookId} ORDER BY created_at DESC")
     List<Role> findByBookId(Long bookId);
+
+    /**
+     * 轻量级 option 查询：id, name → ListOptionDTO.id, ListOptionDTO.label
+     */
+    @Select("SELECT id, name AS label FROM role WHERE book_id = #{bookId} ORDER BY created_at DESC")
+    List<ListOptionDTO> findOptionsByBookId(@Param("bookId") Long bookId);
+
 
 }

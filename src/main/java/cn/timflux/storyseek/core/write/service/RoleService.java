@@ -1,5 +1,8 @@
 package cn.timflux.storyseek.core.write.service;
+
+import cn.timflux.storyseek.core.write.dto.ListOptionDTO;
 import cn.timflux.storyseek.core.write.dto.RoleDTO;
+
 import java.util.List;
 
 /**
@@ -18,4 +21,5 @@ public interface RoleService {
     void deleteRole(Long id);
     List<RoleDTO> getRolesByBook(Long bookId);
     String getPromptText(List<Long> ids);
+    List<ListOptionDTO> getRoleOptions(Long bookId);
 }

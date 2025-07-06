@@ -1,5 +1,6 @@
 package cn.timflux.storyseek.core.write.service.impl;
 
+import cn.timflux.storyseek.core.write.dto.ListOptionDTO;
 import cn.timflux.storyseek.core.write.dto.RoleDTO;
 import cn.timflux.storyseek.core.write.entity.Role;
 import cn.timflux.storyseek.core.write.mapper.RoleMapper;
@@ -70,5 +71,10 @@ public class RoleServiceImpl implements RoleService {
         return roles.stream()
                 .map(r -> String.format("角色名：%s\n简介：%s", r.getName(), r.getDescription()))
                 .collect(Collectors.joining("\n\n"));
+    }
+
+    @Override
+    public List<ListOptionDTO> getRoleOptions(Long bookId) {
+        return roleMapper.findOptionsByBookId(bookId);
     }
 }
