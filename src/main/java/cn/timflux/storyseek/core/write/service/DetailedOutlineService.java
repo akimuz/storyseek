@@ -1,6 +1,7 @@
 package cn.timflux.storyseek.core.write.service;
 
 import cn.timflux.storyseek.core.write.dto.DetailedOutlineDTO;
+import cn.timflux.storyseek.core.write.dto.ListOptionDTO;
 
 import java.util.List;
 
@@ -21,4 +22,5 @@ public interface DetailedOutlineService {
     List<DetailedOutlineDTO> listByOutlineId(Long outlineId);
 
     List<DetailedOutlineDTO> listByBookId(Long book_id);
+    List<ListOptionDTO> getDetailedOutlineOptions(Long bookId);
 }

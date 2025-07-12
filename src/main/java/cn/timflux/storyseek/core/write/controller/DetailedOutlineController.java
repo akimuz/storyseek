@@ -2,6 +2,7 @@ package cn.timflux.storyseek.core.write.controller;
 
 import cn.timflux.storyseek.common.api.ApiResponse;
 import cn.timflux.storyseek.core.write.dto.DetailedOutlineDTO;
+import cn.timflux.storyseek.core.write.dto.ListOptionDTO;
 import cn.timflux.storyseek.core.write.service.DetailedOutlineService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +59,12 @@ public class DetailedOutlineController {
     @GetMapping(("/listByBook"))
     public ApiResponse<List<DetailedOutlineDTO>> listByBook(@RequestParam Long bookId) {
         List<DetailedOutlineDTO> list = detailedOutlineService.listByBookId(bookId);
+        return ApiResponse.ok(list);
+    }
+
+    @GetMapping("/optionlist")
+    public ApiResponse<List<ListOptionDTO>> optionList(@RequestParam Long bookId) {
+        List<ListOptionDTO> list = detailedOutlineService.getDetailedOutlineOptions(bookId);
         return ApiResponse.ok(list);
     }
 }

@@ -1,6 +1,7 @@
 package cn.timflux.storyseek.core.write.service.impl;
 
 import cn.timflux.storyseek.core.write.dto.DetailedOutlineDTO;
+import cn.timflux.storyseek.core.write.dto.ListOptionDTO;
 import cn.timflux.storyseek.core.write.entity.DetailedOutline;
 import cn.timflux.storyseek.core.write.mapper.DetailedOutlineMapper;
 import cn.timflux.storyseek.core.write.service.DetailedOutlineService;
@@ -89,6 +90,11 @@ public class DetailedOutlineServiceImpl implements DetailedOutlineService {
             BeanUtils.copyProperties(entity, dto);
             return dto;
         }).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<ListOptionDTO> getDetailedOutlineOptions(Long bookId) {
+        return detailedOutlineMapper.findOptionsByBookId(bookId);
     }
 
 }
