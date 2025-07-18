@@ -13,10 +13,6 @@ import com.baomidou.mybatisplus.extension.service.IService;
  * @Version 1.0
  */
 public interface UserService extends IService<User> {
-    boolean register(String username, String rawPassword, String captcha);
-    boolean loginWithPassword(String phone, String rawPassword);
-    boolean loginWithCaptcha(String phone, String captcha);
-    boolean userExists(String username);
+    User createUser(String identifier, String passwordHash);
     Long getUserInspiration(Long userId);
-    User getByPhone(String phone);
 }

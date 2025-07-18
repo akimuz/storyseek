@@ -1,16 +1,15 @@
 package cn.timflux.storyseek.core.user.controller;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.dev33.satoken.util.SaResult;
-import cn.timflux.storyseek.common.api.ApiResponse;
+import cn.timflux.storyseek.core.user.dto.DeleteAccountDTO;
+import cn.timflux.storyseek.core.user.dto.LoginDTO;
+import cn.timflux.storyseek.core.user.dto.RegisterDTO;
 import cn.timflux.storyseek.core.user.entity.User;
-import cn.timflux.storyseek.core.user.service.CaptchaService;
-import cn.timflux.storyseek.core.user.service.UserService;
-import lombok.Data;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseEntity;
+import cn.timflux.storyseek.core.user.service.AuthService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -22,132 +21,63 @@ import java.util.Map;
  * @Create 2025/6/24 下午7:01
  * @Version 1.0
  */
+@Slf4j
 @RestController
-@RequestMapping("api/auth")
+@RequestMapping("/api/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
-    private final UserService userService;
-    private final CaptchaService captchaService;
+    private final AuthService authService;
 
-    public AuthController(UserService userService, CaptchaService captchaService) {
-        this.userService = userService;
-        this.captchaService = captchaService;
-    }
-
-    // 发送验证码接口
     @PostMapping("/send-captcha")
-    public SaResult sendCaptcha(@RequestParam String phone) {
-        captchaService.sendCaptcha(phone);
+    public SaResult sendCaptcha(@RequestParam String identifier) {
+        log.info("发送验证码请求：{}", identifier);
+        authService.sendCaptcha(identifier);
         return SaResult.ok("验证码已发送");
-    }
-
-    // 注册 DTO
-    @Data
-    public static class RegisterDTO {
-        private String phone;
-        private String password;
-        private String captcha;
-    }
-
-    // 登录 DTO
-    @Data
-    public static class LoginDTO {
-        private String phone;
-        private String password; // 选填
-        private String captcha;  // 选填
     }
 
     @PostMapping("/register")
     public SaResult register(@RequestBody RegisterDTO dto) {
-        try {
-            boolean ok = userService.register(dto.getPhone(), dto.getPassword(), dto.getCaptcha());
-
-            if (ok) {
-                User user = userService.getByPhone(dto.getPhone());
-                if (user == null) return SaResult.error("用户注册后查询失败");
-
-                StpUtil.login(user.getId());
-
-                return SaResult.ok("注册成功").setData(Map.of(
-                    "userId", user.getId(),
-                    "username", user.getPhone()
-                ));
-            } else {
-                return SaResult.error("注册失败");
-            }
-        } catch (RuntimeException e) {
-            return SaResult.error(e.getMessage());
-        }
+        User user = authService.register(dto);
+        StpUtil.login(user.getId());
+        return SaResult.ok("注册成功").setData(Map.of(
+                "userId", user.getId().toString(),
+                "username", user.getUsername()
+        ));
     }
 
+    @PostMapping("/delete-account")
+    public SaResult deleteAccount(@RequestBody DeleteAccountDTO dto) {
+        Long userId = StpUtil.getLoginIdAsLong();
+        authService.deleteAccount(userId, dto.getPassword());
+        StpUtil.logout(); // 删除后自动登出
+        return SaResult.ok("账号已永久删除");
+    }
 
     @PostMapping("/login")
     public SaResult login(@RequestBody LoginDTO dto) {
-        try {
-            boolean ok;
-            User user;
-            if (dto.getPassword() != null && !dto.getPassword().isEmpty()) {
-                ok = userService.loginWithPassword(dto.getPhone(), dto.getPassword());
-            } else if (dto.getCaptcha() != null && !dto.getCaptcha().isEmpty()) {
-                ok = userService.loginWithCaptcha(dto.getPhone(), dto.getCaptcha());
-            } else {
-                return SaResult.error("密码或验证码必须填写一个");
-            }
-
-            if (!ok) {
-                return SaResult.error("登录失败");
-            }
-
-            // 登录成功，获取用户信息
-            user = userService.getByPhone(dto.getPhone()); // 通过手机号查用户
-
-            Map<String, Object> data = new HashMap<>();
-            data.put("userId", user.getId());
-            data.put("username", user.getUsername());
-
-            return SaResult.data(data).setMsg("登录成功");
-        } catch (RuntimeException e) {
-            return SaResult.error(e.getMessage());
-        }
+        User user = authService.login(dto);
+        StpUtil.login(user.getId());
+        return SaResult.ok("登录成功").setData(Map.of(
+                "userId", user.getId().toString(),
+                "username", user.getUsername()
+        ));
     }
-
-
-    @GetMapping("/status")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> status() {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setCacheControl("no-store, no-cache, must-revalidate, max-age=0");
-        headers.setPragma("no-cache");
-        headers.setExpires(0);
-
-        if (StpUtil.isLogin()) {
-            Long userId = StpUtil.getLoginIdAsLong();
-            User user = userService.getById(userId);
-
-            if (user == null) {
-                return ResponseEntity.ok()
-                    .headers(headers)
-                    .body(ApiResponse.error("用户不存在"));
-            }
-
-            Map<String, Object> data = new HashMap<>();
-            data.put("userId", userId);
-            data.put("username", user.getUsername());
-
-            return ResponseEntity.ok()
-                .headers(headers)
-                .body(ApiResponse.ok(data));
-        } else {
-            return ResponseEntity.ok()
-                .headers(headers)
-                .body(ApiResponse.error("未登录"));
-        }
-    }
-
-
 
     @GetMapping("/logout")
     public SaResult logout() {
         StpUtil.logout();
         return SaResult.ok("已注销");
+    }
+
+    @GetMapping("/status")
+    public SaResult status() {
+        if (!StpUtil.isLogin()) return SaResult.error("未登录");
+        Long userId = StpUtil.getLoginIdAsLong();
+        User user = authService.getUserById(userId);
+        return SaResult.ok().setData(Map.of(
+                "userId", userId.toString(),
+                "username", user.getUsername()
+        ));
     }
 }

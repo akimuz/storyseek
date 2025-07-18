@@ -18,7 +18,8 @@ public class User {
     private Long id;
     private String username;
     private String phone;
+    private String email;
     private String password;
-    private Long inspiration;
+    private Long inspiration; // 代币
     private LocalDateTime createTime;
 }
