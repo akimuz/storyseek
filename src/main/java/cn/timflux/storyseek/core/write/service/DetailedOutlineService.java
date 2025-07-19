@@ -22,5 +22,8 @@ public interface DetailedOutlineService {
     List<DetailedOutlineDTO> listByOutlineId(Long outlineId);
 
     List<DetailedOutlineDTO> listByBookId(Long book_id);
+
+    String getPromptText(List<Long> ids);
+
     List<ListOptionDTO> getDetailedOutlineOptions(Long bookId);
 }

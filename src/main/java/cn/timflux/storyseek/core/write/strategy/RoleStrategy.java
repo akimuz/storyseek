@@ -27,18 +27,22 @@ public class RoleStrategy implements WritingStageStrategy{
     @Override
     public List<ChatMessage> buildPrompt(PromptRequestDTO request) {
         log.info("构建角色阶段 prompt，content: {}", request.getContent());
-
+        log.info("request检查" + request.getPromptSnippetIds());
         String promptBody = assembler.assembleRoleBody(
             request.getContent(),
             request.getCharacterCardIds(),
             request.getWorldSettingIds(),
+            request.getOutlineIds(),
+            request.getDetailOutlineIds(),
+            request.getRelatedChapterIds(),
+            request.getRelatedSummaryIds(),
             request.getPromptSnippetIds()
         );
 
         log.debug("生成的用户 prompt 内容：{}", promptBody);
 
         return List.of(
-            ChatMessage.system("你是一位富有创意的小说编剧助手，擅长根据设定和剧情完成人物设定。"),
+            ChatMessage.system("你是一位富有创意的小说编剧助手，擅长人物设定。"),
             ChatMessage.user(promptBody)
         );
     }

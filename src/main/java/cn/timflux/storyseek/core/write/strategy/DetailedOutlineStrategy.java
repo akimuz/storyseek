@@ -33,13 +33,17 @@ public class DetailedOutlineStrategy implements WritingStageStrategy {
             request.getContent(),
             request.getCharacterCardIds(),
             request.getWorldSettingIds(),
+            request.getOutlineIds(),
+            request.getDetailOutlineIds(),
+            request.getRelatedChapterIds(),
+            request.getRelatedSummaryIds(),
             request.getPromptSnippetIds()
         );
 
         log.debug("生成的用户 prompt 内容：{}", promptBody);
 
         return List.of(
-            ChatMessage.system("你是一位结构清晰的小说编剧助手，擅长把章节大纲扩展为详细的情节。"),
+            ChatMessage.system("你是一位结构清晰的小说编剧助手，擅长撰写章节细纲。"),
             ChatMessage.user(promptBody)
         );
     }

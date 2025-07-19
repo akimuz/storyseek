@@ -33,13 +33,17 @@ public class OutlineStrategy implements WritingStageStrategy {
             request.getContent(),
             request.getCharacterCardIds(),
             request.getWorldSettingIds(),
+            request.getOutlineIds(),
+            request.getDetailOutlineIds(),
+            request.getRelatedChapterIds(),
+            request.getRelatedSummaryIds(),
             request.getPromptSnippetIds()
         );
 
         log.debug("生成的用户 prompt 内容：{}", promptBody);
 
         return List.of(
-            ChatMessage.system("你是一位小说大纲规划专家，善于根据主题生成章节结构。"),
+            ChatMessage.system("你是一位小说大纲规划专家，善于生成章节结构。"),
             ChatMessage.user(promptBody)
         );
     }

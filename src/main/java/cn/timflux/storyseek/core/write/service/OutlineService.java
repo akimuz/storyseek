@@ -1,5 +1,6 @@
 package cn.timflux.storyseek.core.write.service;
 
+import cn.timflux.storyseek.core.write.dto.ListOptionDTO;
 import cn.timflux.storyseek.core.write.dto.OutlineDTO;
 
 import java.util.List;
@@ -19,4 +20,8 @@ public interface OutlineService {
     void deleteOutline(Long id);
     OutlineDTO getOutlineById(Long id);
     List<OutlineDTO> listByBookId(Long bookId);
+
+    String getPromptText(List<Long> ids);
+
+    List<ListOptionDTO> getOutlineOptions(Long bookId);
 }

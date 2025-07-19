@@ -32,13 +32,17 @@ public class WorldStrategy implements WritingStageStrategy{
             request.getContent(),
             request.getCharacterCardIds(),
             request.getWorldSettingIds(),
+            request.getOutlineIds(),
+            request.getDetailOutlineIds(),
+            request.getRelatedChapterIds(),
+            request.getRelatedSummaryIds(),
             request.getPromptSnippetIds()
         );
 
         log.debug("生成的用户 prompt 内容：{}", promptBody);
 
         return List.of(
-            ChatMessage.system("你是一位富有创意的小说编剧助手，擅长根据现有的设定和剧情拓展设定。"),
+            ChatMessage.system("你是一位富有创意的小说编剧助手，擅长设定。"),
             ChatMessage.user(promptBody)
         );
     }

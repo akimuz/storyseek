@@ -85,18 +85,24 @@ public class PromptSnippetServiceImpl implements PromptSnippetService {
 
     @Override
     public String getPromptText(List<Long> ids) {
+        log.debug("传入的ID：" + ids);
         if (ids == null || ids.isEmpty()) return "";
-        Long currentUserId = StpUtil.getLoginIdAsLong();
 
-        List<PromptSnippet> snippets = mapper.selectBatchIds(ids).stream()
-                .filter(s -> s.getUserId().equals(currentUserId) || Boolean.TRUE.equals(s.getPublished()))
-                .toList();
+        Long userId = StpUtil.getLoginIdAsLong();
 
-        return snippets.stream()
-                .map(PromptSnippet::getContent)
-                .filter(Objects::nonNull)
-                .collect(Collectors.joining("\n\n"));
+        // 拼接成 "1,2,3" 的形式传给 SQL
+        String joinedIds = ids.stream()
+            .map(String::valueOf)
+            .collect(Collectors.joining(","));
+
+        List<String> contents = mapper.getCollectedPromptContents(userId, joinedIds);
+        log.debug("拼接ID：" + joinedIds);
+
+        return contents.stream()
+            .filter(Objects::nonNull)
+            .collect(Collectors.joining("\n\n"));
     }
+
 
 
     @Override
@@ -171,4 +177,12 @@ public class PromptSnippetServiceImpl implements PromptSnippetService {
         return dto;
     }
 
+    @Override
+    public List<PromptSnippet> getDefaultSystemPromptSnippets() {
+        // 获取默认提示词
+        QueryWrapper<PromptSnippet> wrapper = new QueryWrapper<>();
+        wrapper.eq("published", true);
+        wrapper.eq("is_default", true);
+        return mapper.selectList(wrapper);
+    }
 }

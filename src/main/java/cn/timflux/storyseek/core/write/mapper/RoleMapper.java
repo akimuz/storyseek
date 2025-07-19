@@ -38,5 +38,4 @@ public interface RoleMapper extends BaseMapper<Role> {
     @Select("SELECT id, name AS label FROM role WHERE book_id = #{bookId} ORDER BY created_at DESC")
     List<ListOptionDTO> findOptionsByBookId(@Param("bookId") Long bookId);
 
-
 }

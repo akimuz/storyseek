@@ -1,5 +1,6 @@
 package cn.timflux.storyseek.core.write.service.impl;
 
+import cn.timflux.storyseek.core.write.dto.ListOptionDTO;
 import cn.timflux.storyseek.core.write.dto.OutlineDTO;
 import cn.timflux.storyseek.core.write.entity.Outline;
 import cn.timflux.storyseek.core.write.mapper.OutlineMapper;
@@ -77,5 +78,19 @@ public class OutlineServiceImpl implements OutlineService {
             BeanUtils.copyProperties(entity, dto);
             return dto;
         }).collect(Collectors.toList());
+    }
+
+    @Override
+    public String getPromptText(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) return "";
+        List<Outline> settings = outlineMapper.selectBatchIds(ids);
+        return settings.stream()
+                .map(s -> String.format("大纲：%s\n描述：%s", s.getTitle(), s.getContent()))
+                .collect(Collectors.joining("\n\n"));
+    }
+
+    @Override
+    public List<ListOptionDTO> getOutlineOptions(Long bookId) {
+        return outlineMapper.findOptionsByBookId(bookId);
     }
 }

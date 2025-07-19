@@ -93,6 +93,15 @@ public class DetailedOutlineServiceImpl implements DetailedOutlineService {
     }
 
     @Override
+    public String getPromptText(List<Long> ids) {
+        if (ids == null || ids.isEmpty()) return "";
+        List<DetailedOutline> settings = detailedOutlineMapper.selectBatchIds(ids);
+        return settings.stream()
+                .map(s -> String.format("细纲：%s\n描述：%s", s.getTitle(), s.getContent()))
+                .collect(Collectors.joining("\n\n"));
+    }
+
+    @Override
     public List<ListOptionDTO> getDetailedOutlineOptions(Long bookId) {
         return detailedOutlineMapper.findOptionsByBookId(bookId);
     }

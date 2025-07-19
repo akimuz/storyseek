@@ -2,6 +2,7 @@ package cn.timflux.storyseek.core.write.service;
 
 import cn.timflux.storyseek.core.write.dto.ListOptionDTO;
 import cn.timflux.storyseek.core.write.dto.PromptSnippetDTO;
+import cn.timflux.storyseek.core.write.entity.PromptSnippet;
 
 import java.util.List;
 
@@ -23,4 +24,5 @@ public interface PromptSnippetService {
     PromptSnippetDTO getSnippetByIdSafe(Long id, Long currentUserId);
     List<PromptSnippetDTO> getSnippetByUser(Long userId);
     List<ListOptionDTO> getPromptOptions(Long bookId);
+    List<PromptSnippet> getDefaultSystemPromptSnippets();
 }

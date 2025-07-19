@@ -32,6 +32,10 @@ public class SummaryStrategy implements WritingStageStrategy{
             request.getContent(),
             request.getCharacterCardIds(),
             request.getWorldSettingIds(),
+            request.getOutlineIds(),
+            request.getDetailOutlineIds(),
+            request.getRelatedChapterIds(),
+            request.getRelatedSummaryIds(),
             request.getPromptSnippetIds()
         );
 

@@ -43,4 +43,13 @@ public interface PromptSnippetMapper extends BaseMapper<PromptSnippet> {
 """)
     List<ListOptionDTO> findOptionsByUserId(@Param("userId") Long userId);
 
+    @Select("""
+        SELECT s.content
+        FROM prompt_snippet s
+        JOIN prompt_snippet_favorite f ON s.id = f.snippet_id
+        WHERE f.user_id = #{userId}
+          AND f.snippet_id IN (${ids})
+    """)
+    List<String> getCollectedPromptContents(@Param("userId") Long userId, @Param("ids") String ids);
+
 }

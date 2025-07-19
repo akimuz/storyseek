@@ -1,8 +1,13 @@
 package cn.timflux.storyseek.core.write.mapper;
 
+import cn.timflux.storyseek.core.write.dto.ListOptionDTO;
 import cn.timflux.storyseek.core.write.entity.Outline;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+
+import java.util.List;
 
 /**
  * ClassName: OutlineMapper
@@ -15,4 +20,6 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface OutlineMapper extends BaseMapper<Outline> {
+    @Select("SELECT id, title AS label FROM outline WHERE book_id = #{bookId} ORDER BY created_at DESC")
+    List<ListOptionDTO> findOptionsByBookId(@Param("bookId") Long bookId);
 }

@@ -30,18 +30,21 @@ public class ContentStrategy implements WritingStageStrategy {
         log.info("构建正文阶段 prompt，content: {}", request.getContent());
 
         String promptBody = assembler.assembleTextBody(
-                request.getContent(),
-                request.getCharacterCardIds(),
-                request.getWorldSettingIds(),
-                request.getPromptSnippetIds(),
-                request.getRelatedSummaryIds(),
-                request.getRelatedChapterIds()
+            request.getContent(),
+            request.getCharacterCardIds(),
+            request.getWorldSettingIds(),
+            request.getOutlineIds(),
+            request.getDetailOutlineIds(),
+            request.getRelatedChapterIds(),
+            request.getRelatedSummaryIds(),
+            request.getPromptSnippetIds()
         );
 
         log.debug("生成的用户 prompt 内容：{}", promptBody);
 
         return List.of(
-                ChatMessage.system("你是一位小说创作专家，善于根据详细情节生成自然流畅的文本。"),
+                ChatMessage.system(
+                        "你是一位专业小说创作专家，请直接生成小说正文内容。"),
                 ChatMessage.user(promptBody)
         );
     }

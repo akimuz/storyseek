@@ -1,6 +1,7 @@
 package cn.timflux.storyseek.core.write.controller;
 
 import cn.timflux.storyseek.common.api.ApiResponse;
+import cn.timflux.storyseek.core.write.dto.ListOptionDTO;
 import cn.timflux.storyseek.core.write.dto.OutlineDTO;
 import cn.timflux.storyseek.core.write.service.OutlineService;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +53,12 @@ public class OutlineController {
     @GetMapping("/listByBook")
     public ApiResponse<List<OutlineDTO>> listByBook(@RequestParam Long bookId) {
         List<OutlineDTO> list = outlineService.listByBookId(bookId);
+        return ApiResponse.ok(list);
+    }
+
+    @GetMapping("/optionlist")
+    public ApiResponse<List<ListOptionDTO>> optionList(@RequestParam Long bookId) {
+        List<ListOptionDTO> list = outlineService.getOutlineOptions(bookId);
         return ApiResponse.ok(list);
     }
 }

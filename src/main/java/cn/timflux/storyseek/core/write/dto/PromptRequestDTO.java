@@ -19,6 +19,8 @@ public class PromptRequestDTO {
     private String content; // 用户输入的核心内容（故事核 / 大纲 / 细纲 / 正文要求）
     private List<Long> characterCardIds;
     private List<Long> worldSettingIds;
+    private List<Long> outlineIds;
+    private List<Long> detailOutlineIds;
     private List<Long> promptSnippetIds; // 提示词条（用户保存或公共提示词）
     private List<Long> relatedChapterIds; // 关联的正文章节
     private List<Long> relatedSummaryIds; // 关联的梗概
