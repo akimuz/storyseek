@@ -34,14 +34,17 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedHeaders("*");
     }
 
-    // 添加禁用缓存的拦截器
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        // 缓存禁用
         registry.addInterceptor(new NoCacheInterceptor())
-                .addPathPatterns("/auth/status"); // 对这个接口禁用缓存
+                .addPathPatterns("/auth/status");
+
+        // SSE 响应头拦截器
+        registry.addInterceptor(new SseResponseInterceptor())
+                .addPathPatterns("/api/write/stream");
     }
 
-    // 定义拦截器类
     private static class NoCacheInterceptor implements HandlerInterceptor {
         @Override
         public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
@@ -52,6 +55,4 @@ public class WebConfig implements WebMvcConfigurer {
             return true;
         }
     }
-
 }
-
