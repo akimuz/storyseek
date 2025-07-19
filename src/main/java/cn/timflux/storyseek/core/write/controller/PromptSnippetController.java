@@ -59,7 +59,7 @@ public class PromptSnippetController {
     }
 
     // 获取详情页接口，内容字段仅作者可见
-    @GetMapping("/{id}")
+    @GetMapping("/getById/{id}")
     public ApiResponse<PromptSnippetDTO> getSnippet(@PathVariable Long id) {
         Long currentUserId = StpUtil.isLogin() ? StpUtil.getLoginIdAsLong() : null;
         PromptSnippetDTO dto = promptSnippetService.getSnippetByIdSafe(id, currentUserId);

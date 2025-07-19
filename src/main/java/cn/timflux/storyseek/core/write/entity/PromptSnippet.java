@@ -27,6 +27,7 @@ public class PromptSnippet {
     private String content;
     private Boolean published; // 是否公开发布到提示词海
     private Long favoriteCount;
+    private Boolean isDefault; // 是否新用户注册默认添加
 
     @TableField(fill = FieldFill.INSERT)
     private LocalDateTime createdAt;
