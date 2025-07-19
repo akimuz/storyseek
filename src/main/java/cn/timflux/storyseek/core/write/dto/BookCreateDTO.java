@@ -1,5 +1,7 @@
 package cn.timflux.storyseek.core.write.dto;
 
+import lombok.Data;
+
 /**
  * ClassName: BookCreateDTO
  * Package: cn.timflux.storyseek.core.write.dto
@@ -9,32 +11,9 @@ package cn.timflux.storyseek.core.write.dto;
  * @Create 2025/6/24 下午7:38
  * @Version 1.0
  */
+@Data
 public class BookCreateDTO {
     private String title;
     private String type;
     private String desc;
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getDesc() {
-        return desc;
-    }
-
-    public void setDesc(String desc) {
-        this.desc = desc;
-    }
 }
