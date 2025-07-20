@@ -10,12 +10,15 @@ import cn.timflux.storyseek.core.user.service.CaptchaService;
 import cn.timflux.storyseek.core.user.service.UserService;
 import cn.timflux.storyseek.core.write.entity.Book;
 import cn.timflux.storyseek.core.write.entity.PromptSnippet;
+import cn.timflux.storyseek.core.write.entity.VolumeChapter;
 import cn.timflux.storyseek.core.write.service.BookService;
 import cn.timflux.storyseek.core.write.service.PromptSnippetFavoriteService;
 import cn.timflux.storyseek.core.write.service.PromptSnippetService;
+import cn.timflux.storyseek.core.write.service.VolumeChapterService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -43,6 +46,9 @@ public class AuthServiceImpl implements AuthService {
     private final PromptSnippetFavoriteService favoriteService;
     private final BookService bookService;
 
+    @Autowired
+    private VolumeChapterService volumeChapterService;
+
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,6}$");
     // 手机号默认11位数字。注意暂不支持国际格式。
     private static final Pattern PHONE_PATTERN = Pattern.compile("^\\d{11}$");
@@ -65,8 +71,8 @@ public class AuthServiceImpl implements AuthService {
             throw new RuntimeException("账号已存在");
         }
 
-        String hashed = SaSecureUtil.md5(password);
-        User user = userService.createUser(identifier, hashed);
+        dto.setPassword(SaSecureUtil.md5(password));
+        User user = userService.createUserInvite(dto);
 
         captchaService.removeCaptcha(identifier);
 
@@ -78,10 +84,28 @@ public class AuthServiceImpl implements AuthService {
         // 注册后新建一本默认新书
         Book defaultBook = new Book();
         defaultBook.setUserId(user.getId());
-        defaultBook.setTitle("未命名");
+        defaultBook.setTitle("我的新书");
         defaultBook.setType("长篇小说");
-        defaultBook.setDescription("默认书籍，点击进入编辑页。");
+        defaultBook.setDescription("点击进入编辑页。");
         bookService.save(defaultBook);
+
+        // 新建新书的第一卷
+        VolumeChapter firstVolume = new VolumeChapter();
+        firstVolume.setBookId(defaultBook.getId());
+        firstVolume.setParentId(0L);
+        firstVolume.setName("第一卷");
+        firstVolume.setOrderNum(1);
+        firstVolume.setType(1); // 卷
+        volumeChapterService.createVolume(firstVolume);
+
+        // 新建第一卷的第一章
+        VolumeChapter firstChapter = new VolumeChapter();
+        firstChapter.setBookId(defaultBook.getId());
+        firstChapter.setParentId(firstVolume.getId());
+        firstChapter.setName("第一章");
+        firstChapter.setOrderNum(1);
+        firstChapter.setType(2); // 章
+        volumeChapterService.createChapter(firstChapter);
 
         return user;
     }
