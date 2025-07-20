@@ -1,8 +1,11 @@
 package cn.timflux.storyseek.core.user.controller;
+
 import cn.dev33.satoken.stp.StpUtil;
 import cn.dev33.satoken.util.SaResult;
 import cn.timflux.storyseek.core.user.service.UserService;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * ClassName: UserController
@@ -34,5 +37,14 @@ public class UserController {
         Long inspiration = userService.getUserInspiration(userId);
 
         return SaResult.ok().set("inspiration", inspiration);
+    }
+
+    @GetMapping("/inspiration/records")
+    public SaResult getInspirationConsumeRecords() {
+        if (!StpUtil.isLogin()) {
+            return SaResult.error("请先登录");
+        }
+        Long userId = StpUtil.getLoginIdAsLong();
+        return SaResult.ok().set("records", userService.getInspirationConsumeRecords(userId));
     }
 }

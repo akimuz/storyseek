@@ -16,4 +16,5 @@ public class RegisterDTO {
     private String identifier; // 邮箱或手机号
     private String password;
     private String captcha;
+    private String inviteCode; // 邀请码
 }

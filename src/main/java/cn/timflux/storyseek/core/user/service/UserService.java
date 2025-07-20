@@ -1,7 +1,11 @@
 package cn.timflux.storyseek.core.user.service;
 
+import cn.timflux.storyseek.core.user.dto.RegisterDTO;
+import cn.timflux.storyseek.core.user.entity.InspirationConsumeRecord;
 import cn.timflux.storyseek.core.user.entity.User;
 import com.baomidou.mybatisplus.extension.service.IService;
+
+import java.util.List;
 
 /**
  * ClassName: UserService
@@ -15,4 +19,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 public interface UserService extends IService<User> {
     User createUser(String identifier, String passwordHash);
     Long getUserInspiration(Long userId);
+    void consumeInspiration(Long userId, Long consumeCount, String purpose, String requestInfo);
+    List<InspirationConsumeRecord> getInspirationConsumeRecords(Long userId);
+    User createUserInvite(RegisterDTO dto);
 }
