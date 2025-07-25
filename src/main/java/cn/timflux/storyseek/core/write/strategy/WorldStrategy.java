@@ -1,8 +1,8 @@
 package cn.timflux.storyseek.core.write.strategy;
 
 import cn.timflux.storyseek.ai.model.dto.ChatMessage;
-import cn.timflux.storyseek.core.write.dto.PromptRequestDTO;
-import cn.timflux.storyseek.core.write.service.PromptAssemblerService;
+import cn.timflux.storyseek.core.write.edit.dto.PromptRequestDTO;
+import cn.timflux.storyseek.core.write.edit.service.PromptAssemblerService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

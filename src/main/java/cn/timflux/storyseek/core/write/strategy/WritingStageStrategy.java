@@ -1,7 +1,7 @@
 package cn.timflux.storyseek.core.write.strategy;
 
 import cn.timflux.storyseek.ai.model.dto.ChatMessage;
-import cn.timflux.storyseek.core.write.dto.PromptRequestDTO;
+import cn.timflux.storyseek.core.write.edit.dto.PromptRequestDTO;
 
 import java.util.List;
 

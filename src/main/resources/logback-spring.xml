@@ -2,13 +2,15 @@
 <configuration>
   <!-- Spring Boot 默认的 logback 配置 -->
   <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+  <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
   <!-- 从 environment 或系统属性读取 LOG_FILE -->
   <property name="LOG_FILE" value="${LOG_FILE:-${LOG_PATH:-./logs}/app.log}"/>
 
-  <!-- 仅引入文件 appender -->
+  <!-- 引入文件 appender -->
   <include resource="org/springframework/boot/logging/logback/file-appender.xml"/>
 
   <root level="INFO">
+    <appender-ref ref="CONSOLE"/>
     <appender-ref ref="FILE"/>
   </root>
 
