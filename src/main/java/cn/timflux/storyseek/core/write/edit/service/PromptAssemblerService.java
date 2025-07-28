@@ -29,7 +29,7 @@ public class PromptAssemblerService {
     @Autowired private WorldSettingService worldService;
     @Autowired private OutlineService outlineService;
     @Autowired private DetailedOutlineService detailedOutlineService;
-    @Autowired private PromptSnippetService snippetService;
+    @Autowired private PromptSnippetEditService snippetService;
     @Autowired private VolumeChapterMapper chapterMapper;
 
     /**

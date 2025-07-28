@@ -1,4 +1,4 @@
-package cn.timflux.storyseek.core.write.edit.service.impl;
+package cn.timflux.storyseek.core.write.promptsea.service.impl;
 
 import cn.timflux.storyseek.core.user.entity.User;
 import cn.timflux.storyseek.core.user.mapper.UserMapper;
@@ -7,7 +7,7 @@ import cn.timflux.storyseek.core.write.edit.entity.PromptSnippet;
 import cn.timflux.storyseek.core.write.edit.entity.PromptSnippetFavorite;
 import cn.timflux.storyseek.core.write.edit.mapper.PromptSnippetFavoriteMapper;
 import cn.timflux.storyseek.core.write.edit.mapper.PromptSnippetMapper;
-import cn.timflux.storyseek.core.write.edit.service.PromptSnippetFavoriteService;
+import cn.timflux.storyseek.core.write.promptsea.service.PromptSnippetFavoriteService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;

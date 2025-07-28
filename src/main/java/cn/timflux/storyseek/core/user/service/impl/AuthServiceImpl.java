@@ -12,8 +12,8 @@ import cn.timflux.storyseek.core.write.edit.entity.Book;
 import cn.timflux.storyseek.core.write.edit.entity.PromptSnippet;
 import cn.timflux.storyseek.core.write.edit.entity.VolumeChapter;
 import cn.timflux.storyseek.core.write.edit.service.BookService;
-import cn.timflux.storyseek.core.write.edit.service.PromptSnippetFavoriteService;
-import cn.timflux.storyseek.core.write.edit.service.PromptSnippetService;
+import cn.timflux.storyseek.core.write.promptsea.service.PromptSnippetFavoriteService;
+import cn.timflux.storyseek.core.write.edit.service.PromptSnippetEditService;
 import cn.timflux.storyseek.core.write.edit.service.VolumeChapterService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +42,7 @@ public class AuthServiceImpl implements AuthService {
     private final CaptchaService captchaService;
     private final UserMapper userMapper;
     private final UserService userService;
-    private final PromptSnippetService promptSnippetService;
+    private final PromptSnippetEditService promptSnippetEditService;
     private final PromptSnippetFavoriteService favoriteService;
     private final BookService bookService;
 
@@ -77,7 +77,7 @@ public class AuthServiceImpl implements AuthService {
         captchaService.removeCaptcha(identifier);
 
         // 注册后收藏默认提示词
-        List<PromptSnippet> defaults = promptSnippetService.getDefaultSystemPromptSnippets();
+        List<PromptSnippet> defaults = promptSnippetEditService.getDefaultSystemPromptSnippets();
         for (PromptSnippet snippet : defaults) {
             favoriteService.setFavorite(user.getId(), snippet.getId(), true);
         }

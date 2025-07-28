@@ -1,12 +1,12 @@
-package cn.timflux.storyseek.core.write.edit.controller;
+package cn.timflux.storyseek.core.write.promptsea.controller;
 
 import cn.dev33.satoken.annotation.SaCheckLogin;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.timflux.storyseek.common.api.ApiResponse;
 import cn.timflux.storyseek.core.write.edit.dto.ListOptionDTO;
-import cn.timflux.storyseek.core.write.edit.dto.PromptSnippetDTO;
+import cn.timflux.storyseek.core.write.promptsea.dto.PromptSnippetDTO;
 import cn.timflux.storyseek.core.write.edit.entity.PromptSnippet;
-import cn.timflux.storyseek.core.write.edit.service.PromptSnippetFavoriteService;
+import cn.timflux.storyseek.core.write.promptsea.service.PromptSnippetFavoriteService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,11 +24,11 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping("/api/prompt/favorite")
-public class PromptSnippetFavoriteController {
+public class PromptFavoriteController {
 
     private final PromptSnippetFavoriteService favoriteService;
 
-    public PromptSnippetFavoriteController(PromptSnippetFavoriteService favoriteService) {
+    public PromptFavoriteController(PromptSnippetFavoriteService favoriteService) {
         this.favoriteService = favoriteService;
     }
 

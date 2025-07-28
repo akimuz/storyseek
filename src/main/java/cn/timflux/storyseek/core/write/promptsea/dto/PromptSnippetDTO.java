@@ -1,6 +1,8 @@
-package cn.timflux.storyseek.core.write.edit.dto;
+package cn.timflux.storyseek.core.write.promptsea.dto;
 
 import lombok.Data;
+
+import java.util.List;
 
 /**
  * ClassName: PromptSnippetDTO
@@ -20,4 +22,6 @@ public class PromptSnippetDTO {
     private String content;  // 若非作者返回 null
     private String authorName;
     private Boolean published;
+    private List<Long> tags;
+    private List<String> tagNames;
 }
