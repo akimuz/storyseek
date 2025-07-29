@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.timflux.storyseek.core.write.promptsea.mapper.PromptSnippetTagRelationMapper">
+
+    <select id="findSnippetIdsByTagIds" resultType="java.lang.Long">
+        SELECT DISTINCT snippet_id
+        FROM prompt_snippet_tag_relation
+        WHERE tag_id IN
+        <foreach item="item" index="index" collection="tagIds" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+</mapper>
