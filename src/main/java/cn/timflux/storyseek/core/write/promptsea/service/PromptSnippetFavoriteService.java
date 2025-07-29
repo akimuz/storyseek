@@ -1,4 +1,4 @@
-package cn.timflux.storyseek.core.write.edit.service;
+package cn.timflux.storyseek.core.write.promptsea.service;
 
 import cn.timflux.storyseek.core.write.edit.dto.ListOptionDTO;
 import cn.timflux.storyseek.core.write.edit.entity.PromptSnippet;

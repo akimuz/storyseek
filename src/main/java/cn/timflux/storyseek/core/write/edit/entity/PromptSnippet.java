@@ -25,7 +25,7 @@ public class PromptSnippet {
     private String title;
     private String summary;
     private String content;
-    private String tags; // 逗号分隔的标签列表
+    private Long tagsId;
     private Boolean published; // 是否公开发布到提示词海
     private Long favoriteCount;
     private Boolean isDefault; // 是否新用户注册默认添加

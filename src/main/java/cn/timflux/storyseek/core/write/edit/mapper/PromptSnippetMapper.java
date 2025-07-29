@@ -52,4 +52,9 @@ public interface PromptSnippetMapper extends BaseMapper<PromptSnippet> {
     """)
     List<String> getCollectedPromptContents(@Param("userId") Long userId, @Param("ids") String ids);
 
+    @Select("SELECT * FROM prompt_snippet WHERE published = true AND user_id = #{userId} ORDER BY created_at DESC")
+    List<PromptSnippet> findPublishedByUserId(@Param("userId") Long userId);
+
+    @Select("SELECT * FROM prompt_snippet WHERE user_id = #{userId} ORDER BY created_at DESC")
+    List<PromptSnippet> findAllByUserId(@Param("userId") Long userId);
 }
