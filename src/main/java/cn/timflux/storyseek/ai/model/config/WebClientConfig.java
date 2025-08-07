@@ -1,5 +1,8 @@
 package cn.timflux.storyseek.ai.model.config;
 
+import io.netty.channel.ChannelOption;
+import io.netty.handler.timeout.ReadTimeoutHandler;
+import io.netty.handler.timeout.WriteTimeoutHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -9,7 +12,11 @@ import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
+import reactor.netty.resources.ConnectionProvider;
 import reactor.netty.transport.ProxyProvider;
+
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 /**
  * ClassName: WebClientConfig
  * Package: cn.timflux.storyseek.ai.model.config
@@ -29,21 +36,42 @@ public class WebClientConfig {
     private String proxyHost;
     @Value("${proxy.port}")
     private int    proxyPort;
+    @Value("${webclient.connect-timeout:5000}")
+    private int connectTimeout;
+    @Value("${webclient.response-timeout:10000}")
+    private int responseTimeout;
+    @Value("${webclient.max-connections:500}")
+    private int maxConnections;
+    @Value("${webclient.pending-acquire-max:1000}")
+    private int pendingAcquireMax;
 
     @Bean
-    public WebClient webClient(WebClient.Builder builder) {
-        HttpClient httpClient = HttpClient.create();
-        if (proxyEnabled && proxyHost != null && !proxyHost.isEmpty() && proxyPort > 0){
-            // Reactor Netty HttpClient 设置代理
-            httpClient = HttpClient.create()
-                .proxy(proxySpec -> proxySpec
-                    .type(ProxyProvider.Proxy.HTTP)
-                    .host(proxyHost)
-                    .port(proxyPort)
-                );
+    public WebClient webClient() {
+        // 连接池配置
+        ConnectionProvider connectionProvider = ConnectionProvider.builder("webclient-pool")
+            .maxConnections(maxConnections)
+            .pendingAcquireMaxCount(pendingAcquireMax)
+            .pendingAcquireTimeout(Duration.ofSeconds(5))
+            .build();
+
+        HttpClient httpClient = HttpClient.create(connectionProvider)
+            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeout)
+            .responseTimeout(Duration.ofMillis(responseTimeout))
+            .doOnConnected(conn -> conn
+                .addHandlerLast(new ReadTimeoutHandler(responseTimeout, TimeUnit.MILLISECONDS))
+                .addHandlerLast(new WriteTimeoutHandler(responseTimeout, TimeUnit.MILLISECONDS))
+            );
+
+        if (proxyEnabled && proxyHost != null && !proxyHost.isEmpty() && proxyPort > 0) {
+            httpClient = httpClient.proxy(proxy -> proxy
+                .type(ProxyProvider.Proxy.HTTP)
+                .host(proxyHost)
+                .port(proxyPort)
+            );
+            log.info("WebClient 配置了代理: {}:{}", proxyHost, proxyPort);
         }
 
-        return builder
+        return WebClient.builder()
             .clientConnector(new ReactorClientHttpConnector(httpClient))
             .filter(logRequest())   // 打印请求
             .filter(logResponse())  // 打印响应
@@ -56,7 +84,7 @@ public class WebClientConfig {
             log.debug("URL     : {}", clientRequest.url());
             log.debug("Method  : {}", clientRequest.method());
             clientRequest.headers().forEach((name, values) ->
-                values.forEach(value -> log.info("Header  : {} = {}", name, value))
+                values.forEach(value -> log.debug("Header  : {} = {}", name, value))
             );
             return Mono.just(clientRequest);
         });
@@ -69,5 +97,4 @@ public class WebClientConfig {
             return Mono.just(clientResponse);
         });
     }
-
 }
