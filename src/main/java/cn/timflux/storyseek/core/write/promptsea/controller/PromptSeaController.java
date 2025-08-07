@@ -2,6 +2,7 @@ package cn.timflux.storyseek.core.write.promptsea.controller;
 
 import cn.dev33.satoken.stp.StpUtil;
 import cn.timflux.storyseek.common.api.ApiResponse;
+import cn.timflux.storyseek.common.metrics.Monitored;
 import cn.timflux.storyseek.core.write.promptsea.dto.PromptSnippetDTO;
 import cn.timflux.storyseek.core.write.promptsea.service.PromptSeaService;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +26,7 @@ public class PromptSeaController {
         this.promptSeaService = promptSeaService;
     }
     // 探索页接口，返回简介信息，不包含内容
+    @Monitored(value = "promptsea_explore", tags = {"module=promptsea"})
     @GetMapping("/explore")
     public ApiResponse<List<PromptSnippetDTO>> explore(
             @RequestParam(required = false) String keyword,
@@ -41,6 +43,7 @@ public class PromptSeaController {
     }
 
     // 点击获取详情页，内容字段仅作者可见
+    @Monitored(value = "promptsea_get_by_id", tags = {"module=promptsea"})
     @GetMapping("/getById/{id}")
     public ApiResponse<PromptSnippetDTO> getSnippet(@PathVariable Long id) {
         Long currentUserId = StpUtil.isLogin() ? StpUtil.getLoginIdAsLong() : null;
@@ -51,6 +54,8 @@ public class PromptSeaController {
         return ApiResponse.ok(dto);
     }
 
+    // 某用户的提示词列表
+    @Monitored(value = "promptsea_list_by_user", tags = {"module=promptsea"})
     @GetMapping("/listByUser")
     public ApiResponse<List<PromptSnippetDTO>> listByUser(@RequestParam Long userId){
         if (userId == null) {

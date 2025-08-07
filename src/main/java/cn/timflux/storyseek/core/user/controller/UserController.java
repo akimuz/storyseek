@@ -2,6 +2,7 @@ package cn.timflux.storyseek.core.user.controller;
 
 import cn.dev33.satoken.stp.StpUtil;
 import cn.dev33.satoken.util.SaResult;
+import cn.timflux.storyseek.common.metrics.Monitored;
 import cn.timflux.storyseek.core.user.service.UserService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -27,6 +28,7 @@ public class UserController {
         this.userService = userService;
     }
 
+    @Monitored(value = "user_get_inspiration", tags = {"module=user"})
     @GetMapping("/inspiration")
     public SaResult getUserInspiration() {
         if (!StpUtil.isLogin()) {
@@ -39,6 +41,7 @@ public class UserController {
         return SaResult.ok().set("inspiration", inspiration);
     }
 
+    @Monitored(value = "user_get_inspiration_records", tags = {"module=user"})
     @GetMapping("/inspiration/records")
     public SaResult getInspirationConsumeRecords() {
         if (!StpUtil.isLogin()) {

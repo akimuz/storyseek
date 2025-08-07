@@ -1,6 +1,7 @@
 package cn.timflux.storyseek.core.user.controller;
 import cn.dev33.satoken.stp.StpUtil;
 import cn.dev33.satoken.util.SaResult;
+import cn.timflux.storyseek.common.metrics.Monitored;
 import cn.timflux.storyseek.core.user.dto.DeleteAccountDTO;
 import cn.timflux.storyseek.core.user.dto.LoginDTO;
 import cn.timflux.storyseek.core.user.dto.RegisterDTO;
@@ -29,6 +30,7 @@ public class AuthController {
 
     private final AuthService authService;
 
+    @Monitored(value = "auth_send_captcha", tags = {"module=auth"})
     @PostMapping("/send-captcha")
     public SaResult sendCaptcha(@RequestParam String identifier) {
         log.info("发送验证码请求：{}", identifier);
@@ -36,6 +38,7 @@ public class AuthController {
         return SaResult.ok("验证码已发送");
     }
 
+    @Monitored(value = "auth_register", tags = {"module=auth"})
     @PostMapping("/register")
     public SaResult register(@RequestBody RegisterDTO dto) {
         User user = authService.register(dto);
@@ -46,6 +49,7 @@ public class AuthController {
         ));
     }
 
+    @Monitored(value = "auth_delete_account", tags = {"module=auth"})
     @PostMapping("/delete-account")
     public SaResult deleteAccount(@RequestBody DeleteAccountDTO dto) {
         Long userId = StpUtil.getLoginIdAsLong();
@@ -54,6 +58,7 @@ public class AuthController {
         return SaResult.ok("账号已永久删除");
     }
 
+    @Monitored(value = "auth_login", tags = {"module=auth"})
     @PostMapping("/login")
     public SaResult login(@RequestBody LoginDTO dto) {
         User user = authService.login(dto);
@@ -64,12 +69,14 @@ public class AuthController {
         ));
     }
 
+    @Monitored(value = "auth_logout", tags = {"module=auth"})
     @GetMapping("/logout")
     public SaResult logout() {
         StpUtil.logout();
         return SaResult.ok("已注销");
     }
 
+    @Monitored(value = "auth_status", tags = {"module=auth"})
     @GetMapping("/status")
     public SaResult status() {
         if (!StpUtil.isLogin()) return SaResult.error("未登录");
